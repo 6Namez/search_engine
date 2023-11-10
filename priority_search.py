@@ -1,4 +1,3 @@
-import query_process
 from tf_idf_inverted_index import TfIdfInvertedIndex
 import query_process
 
