@@ -22,7 +22,9 @@ class PhraseSearch(TfIdfInvertedIndex):
             # self.handle_no_results_for_quoted_query()
 
     def handle_unquoted_query(self, unquoted_tokens, number_of_results):
-        pass
+        refined_document_ids = self.quotes_search(unquoted_tokens)
+        if len(refined_document_ids) == 0:
+            return self.parent_search(unquoted_tokens, number_of_results)
 
     def handle_mixed_query(self, unquoted_tokens, quoted_tokens, number_of_results):
         refined_document_ids = self.quotes_search(quoted_tokens)
