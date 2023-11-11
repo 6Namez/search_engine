@@ -40,5 +40,30 @@ class PhraseSearch(TfIdfInvertedIndex):
     def quotes_search(self, quoted_tokens):
         pass
 
+    """
+        limited_document_search is taking the refined_document_ids (A a list of doc_ids) and running a search with 
+        processed_query on the limited doc_id space, so we have better time allocation and are only looking through
+        the documents pertaining to the search. and were returning only the number_of_results desired.
+    """
+
     def limited_document_search(self, refined_document_ids, processed_query, number_of_results):
-        pass
+        matching_doc_ids = None
+
+        for term in processed_query:
+            term_doc_ids = set(refined_document_ids.get(term, {}).keys())
+
+            if matching_doc_ids is None:
+                matching_doc_ids = term_doc_ids
+            else:
+                matching_doc_ids = matching_doc_ids.intersection(term_doc_ids)
+
+        if matching_doc_ids is None:
+            return []
+
+        scores = dict()
+        for doc_id in matching_doc_ids:
+            score = self.combine_term_scores(processed_query, doc_id)
+            scores[doc_id] = score
+        sorted_docs = sorted(matching_doc_ids, key=scores.get, reverse=True)
+
+        return sorted_docs[:number_of_results]
