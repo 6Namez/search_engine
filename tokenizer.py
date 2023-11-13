@@ -1,89 +1,75 @@
+import re
+
 
 def tokenize(query_str):
+    """
+    Tokenizes the input string by splitting on whitespace and adding spaces around certain symbols.
+
+    Args:
+        query_str (str): The input string to tokenize.
+
+    Returns:
+        list: A list of tokens.
+    """
+    # Define symbols to add spaces around
     symbols = list('.,%$')
+    # Add spaces around symbols
     for s in symbols:
         query_str = query_str.replace(s, f' {s} ')
+    # Convert to lowercase and split on whitespace
     return query_str.lower().split()
-    
+
+
+def extract_unquoted_and_quoted(matches):
+    """
+    Separates quoted and unquoted parts from a list of matches.
+
+    Args:
+        matches (list): A list of string matches.
+
+    Returns:
+        tuple: A tuple containing two strings - quoted and unquoted parts.
+    """
+    # Extract unquoted strings
+    unquoted_str = [match for match in matches
+                    if not (match.startswith('"') and match.endswith('"'))
+                    and not (match.startswith("'") and match.endswith("'"))]
+
+    # Extract quoted strings and remove surrounding quotes
+    quoted_str = [match.strip('"\'') for match in matches
+                  if match.startswith('"') and match.endswith('"')
+                  or match.startswith("'") and match.endswith("'")]
+
+    # Join the quoted and unquoted strings
+    unquoted_str = ' '.join(unquoted_str)
+    quoted_str = ' '.join(quoted_str)
+
+    # returns are strings
+    return unquoted_str, quoted_str
+
+
 def quotation_parser(query_str):
-    '''
+    """
+    Parses a query string, extracting quoted and unquoted parts, and tokenizing the resulting strings.
 
-    :param query_str: The query used for the function.
+    Args:
+        query_str (str): The input query string.
 
-    This function is responsible for taking in a query with a quotation mark, and return two list,
-    a list with normal tokenize method and a list with the quoted portion counted as one token.
-    This function uses four other functions which is check_character, split_quotation, join_words, and clean_token.
-    :return: two list, one that is normally tokenized and one with the quotation portion tokenized as one token.
-    '''
-    quoted_tokens = []
-    unquoted_tokens = []
-    positions = []
-    if check_character(query_str):
-        unquoted_tokens = tokenize(query_str)
-        wordList = query_str.split(" ")
-        for word in wordList:
-            if "\"" in word or "'" in word:
-                positions.append(wordList.index(word))
-            quoted_tokens.append(word)
-        quoted_tokens = split_quotation(quoted_tokens,positions)
-    return quoted_tokens, unquoted_tokens
+    Returns:
+        tuple: A tuple containing two lists of tokens - quoted and unquoted tokens.
+    """
+    # Define a regular expression pattern to match quoted and unquoted parts
+    pattern = re.compile(r'(".*?"|\S+)')
 
-def check_character(query_str):
-    '''
-    :param query_str: The query used for the function.
+    # Use findall to get all matches
+    matches = pattern.findall(query_str)
 
-    This functions is used to check if a query string has any of the following characters in the checkList.
-    :return: A true or false statement depending on if the characters have the included characters on the checkList.
-    '''
-    checkList = ["'", "\""]
-    for character in checkList:
-        if character in query_str: return True
-    return False
-def split_quotation(quoted_tokens,positions):
-    '''
+    # Separate quoted and unquoted parts
+    unquoted_str, quoted_str = extract_unquoted_and_quoted(matches)
 
-    :param quoted_tokens: A list of the semi-tokenized tokens. Best to use on list with seperated words like ["This", "is", "a", "list"]
-    :param positions: The list of the index of the words with the quotation marks on the quoted_tokens.
+    # Tokenize the resulting strings
+    unquoted_tokens = tokenize(unquoted_str)
+    quoted_tokens = tokenize(quoted_str)
 
-    This functions would run until the position list is empty. It's responsible for splitting the words with quotation and joing them into one token using join_words function.
-    It checks for the length of the quoted_tokens before and after using the join words function. It uses the length difference between before and after join_words function
-    and adjust the rest of the position list accordingly by subtracting the difference on all list. It then deletes the first two positions elements until it's empty.
-    See join_words function to see how it seperates and joins the quotation marks portion into one token.
-
-    :return: A modified quoted_tokens list with the quotation portion marked as one token.
-    '''
-    while positions != []:
-        prevLength = len(quoted_tokens)
-        quoted_tokens = join_words(quoted_tokens, positions[0], positions[1])
-        nextLength = len(quoted_tokens)
-        difference = prevLength - nextLength
-        del positions[0:2]
-        positions = [x - difference for x in positions]
-    return quoted_tokens
-
-def join_words(quoted_tokens, begin, end):
-    '''
-
-    :param quoted_tokens: A list of the semi-tokenized tokens. Best to use on list with seperated words like ["This", "is", "a", "list"]
-    :param begin: The beginning index of the word with the first quotation marks.
-    :param end: The end index of the word with the last quotation marks
-    :param This function is responsible for combining certain elements on a list into one token.
-    :return: A modified quoted_tokens list with the quotation portion marked as one token.
-    '''
-    tempList = quoted_tokens[begin:end + 1]
-    del quoted_tokens[begin + 1:end + 1]
-    tempToken = " ".join(tempList)
-    quoted_tokens[begin] = clean_Token(tempToken)
-    return quoted_tokens
-
-def clean_Token(token):
-    '''
-
-    :param token: A token of a list. It's expected to be a String.
-    Cleans the token provided from quotation marks or other characters.
-
-    :return: A modified token with certain characters removed from the token.
-    '''
-    token = token.replace("\"","")
-    token = token.replace("'","")
-    return token
+    # returns are lists of tokens for quoted and unquoted
+    return unquoted_tokens, quoted_tokens

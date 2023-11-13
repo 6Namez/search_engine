@@ -44,45 +44,39 @@ class TfIdfInvertedIndex(BaseIndex):
                 }) + '\n')
 
     def add_document(self, doc: TransformedDocument):
+        self.total_documents_count += 1
         term_counts = count_terms(doc.terms)
         self.doc_counts.update(term_counts.keys())
-        doc_length = len(doc.terms)
-        self.total_documents_count += 1
 
         # Mapping from doc_ids to term counts in the corresponding document.
         for term, count in term_counts.items():
-            self.term_to_doc_id_tf_scores[term][doc.doc_id] = count / doc_length
+            self.term_to_doc_id_tf_scores[term][doc.doc_id] = count / len(doc.terms)
 
     def term_frequency(self, term, doc_id):
-        return self.term_to_doc_id_tf_scores[term].get(doc_id, 0.0)
+        return self.term_to_doc_id_tf_scores[term][doc_id]
 
     def inverse_document_frequency(self, term):
-        return math.log(len(self.term_to_doc_id_tf_scores) / self.doc_counts[term])
+        return math.log(self.total_documents_count / self.doc_counts[term])
 
     def tf_idf(self, term, doc_id):
-        return self.term_frequency(term, doc_id) * self.inverse_document_frequency(term)
+        if term in self.doc_counts:
+            return self.term_frequency(term, doc_id) * self.inverse_document_frequency(term)
+        return 0
 
     def combine_term_scores(self, terms: list[str], doc_id) -> float:
         return sum([self.tf_idf(term, doc_id) for term in terms])
 
     def search(self, processed_query: list[str], number_of_results: int) -> list[str]:
-        matching_doc_ids = None
-
-        for term in processed_query:
-            term_doc_ids = set(self.term_to_doc_id_tf_scores.get(term, {}).keys())
-
-            if matching_doc_ids is None:
-                matching_doc_ids = term_doc_ids
-            else:
-                matching_doc_ids = matching_doc_ids.intersection(term_doc_ids)
-
-        if matching_doc_ids is None:
-            return []
-        #these if blocks make it so if not ever query term in doc, then it just returns the whole thing
-
         scores = dict()
+        matching_doc_ids = None
+        for term in processed_query:
+            doc_ids = set(self.term_to_doc_id_tf_scores[term].keys())
+            if matching_doc_ids is None:
+                matching_doc_ids = doc_ids
+            else:
+                matching_doc_ids = matching_doc_ids & doc_ids
+
         for doc_id in matching_doc_ids:
             score = self.combine_term_scores(processed_query, doc_id)
             scores[doc_id] = score
-        sorted_docs = sorted(matching_doc_ids, key=scores.get, reverse=True)
-        return sorted_docs[:number_of_results]
+        return sorted(list(matching_doc_ids), key=scores.get, reverse=True)[:number_of_results]

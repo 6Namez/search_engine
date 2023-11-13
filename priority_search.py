@@ -1,42 +1,76 @@
-from tf_idf_inverted_index import TfIdfInvertedIndex
-import query_process
+from typing import List
 
+import tokenizer
+from tf_idf_inverted_index import TfIdfInvertedIndex
+from tokenizer import tokenize
+from documents import TransformedDocument, DictDocumentStore
+import json
 import sys
+
+doc_store_instance = DictDocumentStore()
+
+PATH_TO_JSON = "/Users/calebwillingham/Desktop/csc299/GitHub/search_engine/json/temp.json"
+
+
+def handle_empty_querie() -> None:
+    print("No query received. Exiting")
+    sys.exit(0)
+
+
+def handle_no_results_for_quoted_query() -> None:
+    print("No documents for quoted query. Try searching without quotes. Exiting")
+    sys.exit(0)
 
 
 class PhraseSearch(TfIdfInvertedIndex):
+    def __init__(self):
+        super().__init__()
+        self.doc_store = doc_store_instance
 
-    def handle_empty_querie(self):
-        pass
 
-    def handle_no_results_for_quoted_query(self):
-        pass
+    def initialize_docs(self) -> None:
+        with open(PATH_TO_JSON, 'r') as file:
+            for line in file:
+                document_dict = json.loads(line)
 
-    def handle_quoted_query(self, quoted_tokens, number_of_results):
+                doc_id = document_dict["doc_id"]
+                text = document_dict["text"]
+
+                # Parse the query to separate quoted and unquoted parts
+                terms = tokenize(text)
+
+                # Create TransformedDocument instance
+                transformed_doc = TransformedDocument(doc_id=doc_id, terms=terms)
+
+                # Create TransformedDocument instances for unquoted and quoted parts
+                self.doc_store = DictDocumentStore.read(PATH_TO_JSON)
+                self.add_document(transformed_doc)
+
+    def handle_quoted_query(self, quoted_tokens: List[str]) -> List[str]:
+        self.initialize_docs()
         refined_document_ids = self.quotes_search(quoted_tokens)
         if len(refined_document_ids) != 0:
-            return self.limited_document_search(refined_document_ids, quoted_tokens, number_of_results)
+            return refined_document_ids
         else:
-            query_process.not_implemented_yet()
-            # self.handle_no_results_for_quoted_query()
+            handle_no_results_for_quoted_query()
 
-    def handle_unquoted_query(self, unquoted_tokens, number_of_results):
-        refined_document_ids = self.quotes_search(unquoted_tokens)
-        if len(refined_document_ids) == 0:
-            return self.parent_search(unquoted_tokens, number_of_results)
+    def handle_unquoted_query(self, unquoted_tokens: List[str], number_of_results: int) -> List[str]:
+        self.initialize_docs()
+        return self.parent_search(unquoted_tokens, number_of_results)
 
-    def handle_mixed_query(self, unquoted_tokens, quoted_tokens, number_of_results):
+    def handle_mixed_query(self, unquoted_tokens: List[str], quoted_tokens: List[str], number_of_results: int) -> List[str]:
+        self.initialize_docs()
         refined_document_ids = self.quotes_search(quoted_tokens)
         if len(refined_document_ids) != 0:
             return self.limited_document_search(refined_document_ids, unquoted_tokens, number_of_results)
         else:
-            query_process.not_implemented_yet()
-            # self.handle_no_results_for_quoted_query()
+            handle_no_results_for_quoted_query()
 
-    def parent_search(self, processed_query, number_of_results):
-        pass
+    def parent_search(self, processed_query: List[str], number_of_results: int) -> List[str]:
+        self.initialize_docs()
+        return super().search(processed_query, number_of_results)
 
-    def quotes_search(self, quoted_tokens):
+    def quotes_search(self, quoted_tokens: List[str]) -> List[str]:
         refined_document_ids = []
 
         matching_doc_ids = None
@@ -69,7 +103,7 @@ class PhraseSearch(TfIdfInvertedIndex):
         the documents pertaining to the search. and were returning only the number_of_results desired.
     """
 
-    def limited_document_search(self, refined_document_ids, processed_query, number_of_results):
+    def limited_document_search(self, refined_document_ids: List[str], processed_query: List[str], number_of_results: int) -> List[str]:
         matching_doc_ids = None
 
         for term in processed_query:

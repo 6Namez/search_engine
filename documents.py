@@ -1,7 +1,7 @@
 from __future__ import annotations
-
 import json
 import typing
+
 
 
 class Document(typing.NamedTuple):
@@ -72,8 +72,11 @@ class ListDocumentStore(DocumentStore):
 
 
 class DictDocumentStore(DocumentStore):
-    def __init__(self):
-        self.doc_ids_to_docs = dict()
+    def __init__(self, doc_ids_to_docs: dict[str, Document] | None = None):
+        if doc_ids_to_docs is None:
+            self.doc_ids_to_docs = dict()
+        else:
+            self.doc_ids_to_docs = doc_ids_to_docs
 
     def add_document(self, doc: Document):
         self.doc_ids_to_docs[doc.doc_id] = doc
@@ -92,19 +95,16 @@ class DictDocumentStore(DocumentStore):
 
     @staticmethod
     def read(path: str) -> 'DictDocumentStore':
-        doc_store = DictDocumentStore()
-        with open(path) as doc:
-            for doc_data in doc:
-                record = json.loads(doc_data)
-                doc = Document(doc_id=record['doc_id'], text=record['text'])
-                doc_store.add_document(doc)
-        return doc_store
+        docs = dict()
+        with open(path) as fp:
+            for line in fp:
+                record = json.loads(line)
+                docs[record['doc_id']] = Document(doc_id=record['doc_id'], text=record['text'])
+        return DictDocumentStore(docs)
 
     def write(self, path: str):
         with open(path, 'w') as fp:
-            for doc_id, doc in self.doc_ids_to_docs.items():
-                data = {
-                    'doc_id': doc_id,
-                    'text': doc.text
-                }
-                fp.write(json.dumps(data) + '\n')
+            for doc in self.doc_ids_to_docs.values():
+                fp.write(json.dumps(doc._asdict()) + '\n')
+
+
