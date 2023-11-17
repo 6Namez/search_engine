@@ -1,14 +1,12 @@
+import priority_search
 from documents import DocumentStore
 from index import BaseIndex
 from tokenizer import tokenize, quotation_parser
-from tf_idf_index import TfIdfIndex
-from tf_idf_inverted_index import TfIdfInvertedIndex
-from priority_search import PhraseSearch
+from typing import List
 import json
 import sys
 
 phrase_search_instance = priority_search.PhraseSearch()
-
 
 
 def user_interface():

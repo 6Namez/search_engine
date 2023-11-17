@@ -3,7 +3,6 @@ import json
 import typing
 
 
-
 class Document(typing.NamedTuple):
     doc_id: str
     text: str
