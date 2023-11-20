@@ -1,5 +1,5 @@
 from typing import List
-from tf_idf_inverted_index import TfIdfInvertedIndex
+from tf_idf_inverted_index import TfIdfInvertedIndex, count_terms
 import sys
 
 
@@ -18,15 +18,23 @@ class PhraseSearch(TfIdfInvertedIndex):
         super().__init__()
         self.doc_id_to_term_indexes = {}
 
-    def term_indexes(self, documents):
-        for doc_id, terms in documents:
-            term_index_dict = {}
-            for index, term in enumerate(terms):
-                if term in term_index_dict:
-                    term_index_dict[term].append(index)
-                else:
-                    term_index_dict[term] = [index]
-            self.doc_id_to_term_indexes[doc_id] = term_index_dict
+    def add_document(self, doc):
+        self.total_documents_count += 1
+        term_counts = count_terms(doc.terms)
+        self.doc_counts.update(term_counts.keys())
+
+        # Mapping from doc_ids to term counts in the corresponding document.
+        for term, count in term_counts.items():
+            self.term_to_doc_id_tf_scores[term][doc.doc_id] = count / len(doc.terms)
+
+        # Adding term indexes
+        term_index_dict = {}
+        for index, term in enumerate(doc.terms):
+            if term in term_index_dict:
+                term_index_dict[term].append(index)
+            else:
+                term_index_dict[term] = [index]
+        self.doc_id_to_term_indexes[doc.doc_id] = term_index_dict
 
     def handle_quoted_query(self, quoted_tokens: List[str]) -> List[str]:
         refined_document_ids = self.quotes_search(quoted_tokens)

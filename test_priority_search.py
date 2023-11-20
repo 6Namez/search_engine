@@ -13,7 +13,6 @@ class TestPhraseSearch(TestCase):
         doc2 = TransformedDocument("doc2", ["test", "document", "for", "document", "got"])
         doc3 = TransformedDocument("doc3", ["this", "document", "is", "also", "got"])
         doc4 = TransformedDocument("doc4", ["this", "is", "text"])
-        self.phrase_search.term_indexes([doc1, doc2, doc3, doc4])
         self.phrase_search.add_document(doc1)
         self.phrase_search.add_document(doc2)
         self.phrase_search.add_document(doc3)

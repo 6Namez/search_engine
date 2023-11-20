@@ -30,21 +30,26 @@ def extract_unquoted_and_quoted(matches):
     Returns:
         tuple: A tuple containing two strings - quoted and unquoted parts.
     """
+    unquoted_str = []
+    quoted_str = []
+
     # Extract unquoted strings
-    unquoted_str = [match for match in matches
-                    if not (match.startswith('"') and match.endswith('"'))
-                    and not (match.startswith("'") and match.endswith("'"))]
+    for match in matches:
+        if not (match.startswith('"') and match.endswith('"')) and not (match.startswith("'") and match.endswith("'")):
+            # Unquoted strings
+            unquoted_str.append(match)
+        elif match.startswith("'") and match.endswith("'"):
+            # Single-quoted strings
+            quoted_str.append(match.strip("'"))
+        elif match.startswith('"') and match.endswith('"'):
+            # Double-quoted strings
+            quoted_str.append(match.strip('"'))
 
-    # Extract quoted strings and remove surrounding quotes
-    quoted_str = [match.strip('"\'') for match in matches
-                  if match.startswith('"') and match.endswith('"')
-                  or match.startswith("'") and match.endswith("'")]
-
-    # Join the quoted and unquoted strings
+    # Join the unquoted and quoted strings
     unquoted_str = ' '.join(unquoted_str)
     quoted_str = ' '.join(quoted_str)
 
-    # returns are strings
+    # Return strings
     return unquoted_str, quoted_str
 
 
@@ -59,7 +64,7 @@ def quotation_parser(query_str):
         tuple: A tuple containing two lists of tokens - quoted and unquoted tokens.
     """
     # Define a regular expression pattern to match quoted and unquoted parts
-    pattern = re.compile(r'(".*?"|\S+)')
+    pattern = re.compile(r'(\'[^\']*\'|"[^"]*"|\S+)')
 
     # Use findall to get all matches
     matches = pattern.findall(query_str)

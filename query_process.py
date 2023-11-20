@@ -1,5 +1,5 @@
 import priority_search
-from documents import DocumentStore
+from documents import DocumentStore, TransformedDocument
 from index import BaseIndex
 from tokenizer import tokenize, quotation_parser
 from typing import List
@@ -10,6 +10,17 @@ phrase_search_instance = priority_search.PhraseSearch()
 
 
 def user_interface():
+    doc1 = TransformedDocument("doc1", ["document", "test", "for", "document"])
+    doc2 = TransformedDocument("doc2", ["document", "test", "for", "a", "test"])
+    doc3 = TransformedDocument("doc3", ["test", "document", "for", "document", "got"])
+    doc4 = TransformedDocument("doc4", ["this", "document", "is", "also", "got"])
+    doc5 = TransformedDocument("doc5", ["this", "is", "text"])
+    phrase_search_instance.add_document(doc1)
+    phrase_search_instance.add_document(doc2)
+    phrase_search_instance.add_document(doc3)
+    phrase_search_instance.add_document(doc4)
+    phrase_search_instance.add_document(doc5)
+
     query_str = input("Enter your query: ")
     number_of_results_str = input("Enter number of results desired: ")
 
@@ -17,7 +28,6 @@ def user_interface():
         number_of_results = int(number_of_results_str)
     except ValueError:
         print("Invalid input for the number of results. Please enter a valid integer.")
-        # You might want to handle this case further, for example, asking the user to enter the input again.
         sys.exit(1)  # Exiting the program with an error code.
 
     document_ids = case_handler(query_str, number_of_results)
@@ -28,30 +38,23 @@ def user_interface():
 
 
 def case_handler(query_str: str, number_of_results: int) -> List[str]:
-    print("case_handler.query_str: ", query_str, "case_handler.number_of_results: ", number_of_results)
-
     unquoted_tokens, quoted_tokens = quotation_parser(query_str)
-    print("case_handler.unquoted_tokens: ", unquoted_tokens, "case_handler.quoted_tokens: ", quoted_tokens)
 
-    if len(unquoted_tokens) == 0 and len(quoted_tokens) == 0: #works
-        print("case 1")
+    if len(unquoted_tokens) == 0 and len(quoted_tokens) == 0:
         priority_search.handle_empty_querie()
 
     if len(unquoted_tokens) == 0 and len(quoted_tokens) != 0:
-        print("case 2")
-        number_of_results = 10
         return phrase_search_instance.handle_quoted_query(quoted_tokens)
 
     if len(unquoted_tokens) != 0 and len(quoted_tokens) == 0:
-        print("case 3")
         return phrase_search_instance.handle_unquoted_query(unquoted_tokens, number_of_results)
 
     if len(unquoted_tokens) != 0 and len(quoted_tokens) != 0:
-        print("case 4")
         return phrase_search_instance.handle_mixed_query(unquoted_tokens, quoted_tokens, number_of_results)
 
 
 class FullDocumentsOutputFormatter:
+
     def format_out(self, results: list[str], document_store: DocumentStore, unused_processed_query):
         output_string = ''
         for doc_id in results:
@@ -61,6 +64,7 @@ class FullDocumentsOutputFormatter:
 
 
 class DocIdsOnlyFormatter:
+
     def format_out(self, results: list[str], document_store: DocumentStore, unused_processed_query):
         return results
 
