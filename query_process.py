@@ -54,7 +54,6 @@ def case_handler(query_str: str, number_of_results: int) -> List[str]:
 
 
 class FullDocumentsOutputFormatter:
-
     def format_out(self, results: list[str], document_store: DocumentStore, unused_processed_query):
         output_string = ''
         for doc_id in results:
@@ -64,7 +63,6 @@ class FullDocumentsOutputFormatter:
 
 
 class DocIdsOnlyFormatter:
-
     def format_out(self, results: list[str], document_store: DocumentStore, unused_processed_query):
         return results
 

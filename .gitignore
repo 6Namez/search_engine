@@ -1,0 +1,17 @@
+
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/search_engine.iml
+.idea/vcs.xml
+__pycache__/documents.cpython-310.pyc
+__pycache__/index.cpython-310.pyc
+*.pyc
+json/.DS_Store
+json/msmarco_passage_dev_qrels.json
+json/msmarco_passage_dev_queries.json
+.DS_Store
+json/temp.json
+json/temp_copy.json
+json/temp_out.json
